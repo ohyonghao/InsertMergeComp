@@ -80,11 +80,11 @@ vector<uint32_t> MainWindow::insertionSort( ){
     for( uint32_t j = 1; j < A.size() ; ++j ){
         auto key = A[j];
         auto i = j - 1;
-        while( i > 0 && A[i] > key ){
+        while( i < A.size() && A[i] > key ){
             A[i+1] = A[i];
-            i = i-1;
-           A[i+1] = key;
+            --i;
         }
+        A[i+1] = key;
     }
     return A;
 }
