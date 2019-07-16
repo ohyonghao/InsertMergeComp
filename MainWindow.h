@@ -24,11 +24,13 @@ private:
     QPushButton *pbRun;
     QPushButton *pbInsertionSort;
     QPushButton *pbMergeSort;
+    QPushButton *pbGenerateGraphs;
 
     QTextEdit *teArray;
     QTextEdit *teInsertionArea;
     QTextEdit *teMergedArea;
     QLineEdit *leNumbers;
+    QLineEdit *leIterations;
 
     std::vector<uint32_t> generateArray( uint32_t size, uint32_t low=0, uint32_t high=std::numeric_limits<uint32_t>::max() );
     QString intsToString(std::vector<uint32_t> array);
@@ -40,13 +42,14 @@ private:
     std::vector<uint32_t> mergedArray;
 
 
-    std::vector<uint32_t> insertionSort();
-    std::vector<uint32_t> mergeSort(std::vector<uint32_t> A);
+    std::vector<uint32_t> insertionSort(const std::vector<uint32_t> A);
+    std::vector<uint32_t> mergeSort(const std::vector<uint32_t> A);
     std::vector<uint32_t> merge(std::vector<uint32_t> A, std::vector<uint32_t> B);
 public slots:
     void onRunClicked();
     void onInsertionClicked();
     void onMergeClicked();
+    void onGenerateGraphsClicked();
 };
 
 #endif // MAINWINDOW_H
