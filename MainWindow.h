@@ -22,7 +22,10 @@ private:
 
     QVBoxLayout *mainLayout;
     QPushButton *pbRun;
-    QTextEdit *teListArea;
+    QPushButton *pbInsertionSort;
+    QPushButton *pbMergeSort;
+
+    QTextEdit *teArray;
     QTextEdit *teInsertionArea;
     QTextEdit *teMergedArea;
     QLineEdit *leNumbers;
@@ -30,17 +33,20 @@ private:
     std::vector<uint32_t> generateArray( uint32_t size, uint32_t low=0, uint32_t high=std::numeric_limits<uint32_t>::max() );
     QString intsToString(std::vector<uint32_t> array);
 
-    std::vector<uint32_t> array1;
-    std::vector<uint32_t> array2;
+    std::vector<uint32_t> unsortedArray;
+    //std::vector<uint32_t> array2;
 
     std::vector<uint32_t> insertionArray;
     std::vector<uint32_t> mergedArray;
 
 
-    void insertionSort( uint32_t size );
-    void mergeSort( uint32_t size );
+    std::vector<uint32_t> insertionSort();
+    std::vector<uint32_t> mergeSort(std::vector<uint32_t> A);
+    std::vector<uint32_t> merge(std::vector<uint32_t> A, std::vector<uint32_t> B);
 public slots:
     void onRunClicked();
+    void onInsertionClicked();
+    void onMergeClicked();
 };
 
 #endif // MAINWINDOW_H
