@@ -4,6 +4,7 @@
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QElapsedTimer>
+#include <QVector>
 
 #include <cstdlib>
 #include <iostream>
@@ -35,17 +36,23 @@ void MainWindow::setupUI(){
 
     QLabel *lNumbers = new QLabel("Size");
     QLabel *lIterations = new QLabel("Iterations");
+    QLabel *lSteps = new QLabel("Steps");
     leNumbers = new QLineEdit;
     leNumbers->setValidator(new QIntValidator(0,60000));
     leNumbers->setText("100");
 
     leIterations = new QLineEdit;
     leIterations->setValidator(new QIntValidator(0,60000));
-    leIterations->setText("100");
+    leIterations->setText("10");
+
+    leSteps = new QLineEdit;
+    leSteps->setValidator(new QIntValidator(0,60000));
+    leSteps->setText("100");
 
     QHBoxLayout *hbNums = new QHBoxLayout;
     hbNums->addWidget(lNumbers);    hbNums->addWidget(leNumbers);
     hbNums->addWidget(lIterations); hbNums->addWidget(leIterations);
+    hbNums->addWidget(lSteps); hbNums->addWidget(leSteps);
 
     QHBoxLayout *hbButtons = new QHBoxLayout;
 
@@ -65,9 +72,12 @@ void MainWindow::setupUI(){
     connect(pbGenerateGraphs, &QPushButton::released, this, &MainWindow::onGenerateGraphsClicked);
 
 
+    //plot = new QCustomPlot;
+
     mainLayout->addWidget(teArray);
     mainLayout->addWidget(teInsertionArea);
     mainLayout->addWidget(teMergedArea);
+    //mainLayout->addWidget(plot);
     mainLayout->addLayout(hbNums);
     mainLayout->addLayout(hbButtons);
 }
@@ -92,7 +102,7 @@ void MainWindow::onRunClicked(){
     teArray->setText(intsToString(unsortedArray));
 }
 
-vector<uint32_t> MainWindow::insertionSort( const vector<uint32_t> array ){
+vector<uint32_t> MainWindow::insertionSort( const vector<uint32_t>& array ){
     auto A = array;
     for( uint32_t j = 1; j < A.size() ; ++j ){
         auto key = A[j];
@@ -106,8 +116,8 @@ vector<uint32_t> MainWindow::insertionSort( const vector<uint32_t> array ){
     return A;
 }
 
-vector<uint32_t> MainWindow::mergeSort(const vector<uint32_t> A){
-    if(A.size() == 1 ) return A;
+vector<uint32_t> MainWindow::mergeSort(const vector<uint32_t>& A){
+    if(A.size() <= 1 ) return A;
 
     uint32_t mid = static_cast<uint32_t>(A.size()/2);
     auto B = mergeSort(vector<uint32_t>(A.begin(), A.begin()+mid));
@@ -154,33 +164,81 @@ void MainWindow::onGenerateGraphsClicked(){
     // We need to run it an x number of times
     uint32_t size = static_cast<uint32_t>(leNumbers->text().toInt());
     uint32_t iterations = static_cast<uint32_t>(leIterations->text().toInt());
+    uint32_t steps = static_cast<uint32_t>(leSteps->text().toInt());
 
-    auto array = generateArray(size);
+    QVector<double> xaxis;
+    vector<vector<uint32_t>> lols;
+    for( auto i = 0; i < iterations; ++i ){
+        lols.push_back(generateArray(size + i*steps));
+        xaxis.append(size+i*steps);
+    }
 
-    vector<qint64> insertTime;
+    QVector<double> insertTime;
     insertTime.reserve(iterations);
 
     QElapsedTimer timer;
-    timer.start();
     for( auto i = 0; i < iterations; ++i ){
-        insertionSort(array);
+        timer.restart();
+        insertionSort(lols[i]);
         insertTime.push_back(timer.nsecsElapsed());
     }
 
-    vector<qint64> mergeTime;
+    QVector<double> mergeTime;
     mergeTime.reserve(iterations);
 
-    timer.restart();
     for( auto i = 0; i < iterations; ++i ){
-        mergeSort(array);
+        timer.restart();
+        mergeSort(lols[i]);
         mergeTime.push_back(timer.nsecsElapsed());
     }
 
+    transform( lols.begin(), lols.end(), lols.begin(), [this](auto list){
+        return insertionSort(list);
+    });
+
+    QVector<double> sInsertTime;
+    sInsertTime.reserve(iterations);
+    for( auto i = 0; i < iterations; ++i ){
+        timer.restart();
+        insertionSort(lols[i]);
+        sInsertTime.push_back(timer.nsecsElapsed());
+    }
+    QVector<double> sMergeTime;
+    sMergeTime.reserve(iterations);
+    for( auto i = 0; i < iterations; ++i ){
+        timer.restart();
+        mergeSort(lols[i]);
+        sMergeTime.push_back(timer.nsecsElapsed());
+    }
+    QCustomPlot *plot;
+    plot = generateGraph(xaxis, insertTime, mergeTime);
+    plot->saveJpg(QString("image_%1_%2.jpg").arg(iterations).arg(steps),
+                  400, 200);
+    plot = generateGraph(xaxis, sInsertTime, sMergeTime);
+    plot->saveJpg(QString("image_%1_%2_sorted.jpg").arg(iterations).arg(steps),
+                  400, 200);
+}
+
+QCustomPlot *MainWindow::generateGraph(const QVector<double>& xaxis, const QVector<double>& insertTime, const QVector<double>& mergeTime){
+
     // Now generate the graph
-    for( auto i: insertTime ){
-        cout << "Insert: " << i << endl;
-    }
-    for( auto i: mergeTime ){
-        cout << "Merge: " << i << endl;
-    }
+    QCustomPlot *plot = new QCustomPlot;
+    plot->setAttribute(Qt::WA_DeleteOnClose);
+    plot->addGraph();
+    plot->graph(0)->setPen(QPen(Qt::red));
+    plot->graph(0)->setData(xaxis, insertTime, true);
+    plot->graph(0)->setName("Insertion Sort");
+
+    plot->addGraph();
+    plot->graph(1)->setPen(QPen(Qt::green));
+    plot->graph(1)->setData(xaxis, mergeTime, true);
+    plot->graph(1)->setName("Merge Sort");
+
+    plot->xAxis->rescale();
+    plot->xAxis->setLabel("Size of Array");
+    plot->yAxis->rescale();
+    plot->yAxis->setLabel("Time to Sort (ns)");
+    plot->legend->setVisible(true);
+    plot->replot();
+    return plot;
 }

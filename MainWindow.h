@@ -7,6 +7,8 @@
 #include <QPushButton>
 #include <QLineEdit>
 
+#include <qcustomplot/qcustomplot.h>
+
 #include <vector>
 #include <limits>
 
@@ -31,6 +33,9 @@ private:
     QTextEdit *teMergedArea;
     QLineEdit *leNumbers;
     QLineEdit *leIterations;
+    QLineEdit *leSteps;
+
+    //QCustomPlot *plot;
 
     std::vector<uint32_t> generateArray( uint32_t size, uint32_t low=0, uint32_t high=std::numeric_limits<uint32_t>::max() );
     QString intsToString(std::vector<uint32_t> array);
@@ -42,9 +47,11 @@ private:
     std::vector<uint32_t> mergedArray;
 
 
-    std::vector<uint32_t> insertionSort(const std::vector<uint32_t> A);
-    std::vector<uint32_t> mergeSort(const std::vector<uint32_t> A);
+    std::vector<uint32_t> insertionSort(const std::vector<uint32_t>& A);
+    std::vector<uint32_t> mergeSort(const std::vector<uint32_t>& A);
     std::vector<uint32_t> merge(std::vector<uint32_t> A, std::vector<uint32_t> B);
+
+    QCustomPlot *generateGraph(const QVector<double>&, const QVector<double>&, const QVector<double>&);
 public slots:
     void onRunClicked();
     void onInsertionClicked();
